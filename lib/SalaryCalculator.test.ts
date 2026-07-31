@@ -31,19 +31,22 @@ describe('SalaryCalculator', () => {
     test('2026 configuration should have correct values', () => {
       expect(TAX_CONFIG_2026.year).toBe(2026);
       expect(TAX_CONFIG_2026.maxInsurableIncome).toBe(2300);
-      expect(TAX_CONFIG_2026.employee.pension).toBe(0.0747); // 6.58% + 0.89%
-      expect(TAX_CONFIG_2026.employer.pension).toBe(0.0933); // 8.22% + 1.11%
+      expect(TAX_CONFIG_2026.employee.pension).toBe(0.0658);
+      expect(TAX_CONFIG_2026.employer.pension).toBe(0.0822);
       expect(TAX_CONFIG_2026.incomeTaxRate).toBe(0.10);
     });
 
-    test('2026 pension contribution should be 0.89% higher for employee than 2025', () => {
-      const difference = TAX_CONFIG_2026.employee.pension - TAX_CONFIG_2025.employee.pension;
-      expect(Math.round(difference * 10000) / 10000).toBe(0.0089);
+    test('2026 keeps every employee contribution rate from 2025', () => {
+      expect(TAX_CONFIG_2026.employee).toEqual(TAX_CONFIG_2025.employee);
     });
 
-    test('2026 pension contribution should be 1.11% higher for employer than 2025', () => {
-      const difference = TAX_CONFIG_2026.employer.pension - TAX_CONFIG_2025.employer.pension;
-      expect(Math.round(difference * 10000) / 10000).toBe(0.0111);
+    test('2026 keeps every employer contribution rate from 2025', () => {
+      expect(TAX_CONFIG_2026.employer).toEqual(TAX_CONFIG_2025.employer);
+    });
+
+    test('the maximum insurable income is the only change for 2026', () => {
+      expect(TAX_CONFIG_2026.incomeTaxRate).toBe(TAX_CONFIG_2025.incomeTaxRate);
+      expect(TAX_CONFIG_2026.maxInsurableIncome).toBeGreaterThan(TAX_CONFIG_2025.maxInsurableIncome);
     });
   });
 
@@ -107,21 +110,32 @@ describe('SalaryCalculator', () => {
       expect(result.totalEmployerCost).toBeCloseTo(1783.8, 1);
     });
 
-    test('should calculate net salary correctly for 2026 with new rates', () => {
+    test('should calculate net salary correctly for 2026 (rates unchanged from 2025)', () => {
       const grossSalary = 1500;
       const result = calculator.calculateNetFromGross(grossSalary, TAX_CONFIG_2026);
 
-      // Calculate expected values with 2026 rates
-      const totalContributionRate = 0.0747 + 0.014 + 0.004 + 0.022 + 0.032; // 0.1467
-      const expectedContributions = grossSalary * totalContributionRate; // 220.05
-      const expectedTaxableIncome = grossSalary - expectedContributions; // 1279.95
-      const expectedTax = expectedTaxableIncome * 0.10; // 127.995
-      const expectedNet = expectedTaxableIncome - expectedTax; // 1151.955
+      // 2026 keeps the 2025 rates, so the result below the cap is identical
+      const totalContributionRate = 0.0658 + 0.014 + 0.004 + 0.022 + 0.032; // 0.1378
+      const expectedContributions = grossSalary * totalContributionRate; // 206.7
+      const expectedTaxableIncome = grossSalary - expectedContributions; // 1293.3
+      const expectedTax = expectedTaxableIncome * 0.10; // 129.33
+      const expectedNet = expectedTaxableIncome - expectedTax; // 1163.97
 
       expect(result.grossSalary).toBe(1500);
-      expect(result.totalEmployeeContributions).toBeCloseTo(220.05, 1);
-      expect(result.incomeTax).toBeCloseTo(127.99, 1);
-      expect(result.netSalary).toBeCloseTo(1151.96, 1);
+      expect(result.totalEmployeeContributions).toBeCloseTo(206.7, 1);
+      expect(result.incomeTax).toBeCloseTo(129.33, 1);
+      expect(result.netSalary).toBeCloseTo(1163.97, 1);
+    });
+
+    test('should produce identical results for both years below the 2025 cap', () => {
+      const grossSalary = 1800;
+
+      const result2025 = calculator.calculateNetFromGross(grossSalary, TAX_CONFIG_2025);
+      const result2026 = calculator.calculateNetFromGross(grossSalary, TAX_CONFIG_2026);
+
+      expect(result2026.netSalary).toBe(result2025.netSalary);
+      expect(result2026.totalEmployeeContributions).toBe(result2025.totalEmployeeContributions);
+      expect(result2026.totalEmployerCost).toBe(result2025.totalEmployerCost);
     });
 
     test('should handle max insurable income increase in 2026', () => {
@@ -133,6 +147,14 @@ describe('SalaryCalculator', () => {
       // In 2025, contributions are capped at 2111.46
       // In 2026, contributions are on full 2250 (below max of 2300)
       expect(result2025.totalEmployeeContributions).toBeLessThan(result2026.totalEmployeeContributions);
+    });
+
+    test('should cap the 2026 contribution base at the new maximum insurable income', () => {
+      const result = calculator.calculateNetFromGross(5000, TAX_CONFIG_2026);
+
+      // Employee contributions are calculated on 2300, not on 5000
+      const totalContributionRate = 0.0658 + 0.014 + 0.004 + 0.022 + 0.032; // 0.1378
+      expect(result.totalEmployeeContributions).toBeCloseTo(2300 * totalContributionRate, 1);
     });
   });
 
@@ -156,21 +178,38 @@ describe('SalaryCalculator', () => {
       expect(comparison.percentageChange).toBeLessThan(0);
     });
 
-    test('should correctly compare salaries for 1000 EUR net in 2025', () => {
+    test('should show no change for 1000 EUR net in 2025 (gross below the 2025 cap)', () => {
       const comparison = calculator.compareSalaryBetweenYears(1000);
 
-      expect(comparison.year2025.netSalary).toBeCloseTo(1000, 0);
-      expect(comparison.year2026.netSalary).toBeLessThan(comparison.year2025.netSalary);
-      expect(comparison.netSalaryDifference).toBeLessThan(0);
+      // The gross behind 1000 EUR net is well below the 2025 maximum insurable
+      // income, so raising the cap to 2300 EUR leaves this salary untouched.
+      expect(comparison.year2025.grossSalary).toBeLessThan(TAX_CONFIG_2025.maxInsurableIncome);
+      expect(comparison.year2026.netSalary).toBe(comparison.year2025.netSalary);
+      expect(comparison.netSalaryDifference).toBe(0);
+      expect(comparison.percentageChange).toBe(0);
+      expect(comparison.employerCostDifference).toBe(0);
     });
 
-    test('should correctly calculate employer cost differences', () => {
-      const comparison = calculator.compareSalaryBetweenYears(1500);
+    test('should correctly calculate employer cost differences above the cap', () => {
+      const comparison = calculator.compareSalaryBetweenYears(2000);
 
-      // Employer costs should increase in 2026 due to higher pension contribution
+      // Employer costs increase in 2026 because contributions are now owed on a
+      // larger base (up to 2300 EUR instead of 2111.46 EUR)
       expect(comparison.year2026.totalEmployerCost).toBeGreaterThan(comparison.year2025.totalEmployerCost);
       expect(comparison.employerCostDifference).toBeGreaterThan(0);
       expect(comparison.annualEmployerCostDifference).toBeCloseTo(comparison.employerCostDifference * 12, 1);
+    });
+
+    test('should cap the extra 2026 cost at the difference between the two ceilings', () => {
+      const comparison = calculator.compareSalaryBetweenYears(5000);
+
+      const employeeRate = 0.0658 + 0.014 + 0.004 + 0.022 + 0.032; // 0.1378
+      const capDifference = TAX_CONFIG_2026.maxInsurableIncome - TAX_CONFIG_2025.maxInsurableIncome;
+
+      // Everything above the 2026 ceiling is unaffected, so the monthly loss
+      // tops out at the extra contributions on the widened base, after tax
+      const maxMonthlyLoss = capDifference * employeeRate * 0.9;
+      expect(Math.abs(comparison.netSalaryDifference)).toBeCloseTo(maxMonthlyLoss, 1);
     });
 
     test('should handle salaries at max insurable income threshold', () => {

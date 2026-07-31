@@ -135,7 +135,7 @@ export default function CalculatorPage() {
               <div>
                 <p className="font-semibold text-white">Въведете сумата</p>
                 <p className="text-sm text-zinc-400">
-                  Въведете известната ви сума в лева
+                  Въведете известната ви сума в евро
                 </p>
               </div>
             </div>

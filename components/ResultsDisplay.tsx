@@ -18,6 +18,10 @@ interface ResultsDisplayProps {
 export function ResultsDisplay({ result, onReset }: ResultsDisplayProps) {
   const [showDetails, setShowDetails] = useState(false);
 
+  // The only change for 2026 is the higher maximum insurable income, so salaries
+  // with a gross below the 2025 ceiling are not affected at all.
+  const isUnaffected = result.netSalaryDifference === 0 && result.employerCostDifference === 0;
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('bg-BG', {
       minimumFractionDigits: 2,
@@ -36,40 +40,65 @@ export function ResultsDisplay({ result, onReset }: ResultsDisplayProps) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Main Loss Display */}
-      <div className="bg-gradient-to-br from-danger-950 to-black border-2 border-danger-500 rounded-2xl p-8 shadow-2xl shadow-danger-900/40">
-        <div className="text-center space-y-4">
-          <h2 className="text-xl md:text-2xl text-danger-300 font-semibold">
-            Вашата годишна загуба през 2026 година
-          </h2>
-
-          <div className="text-5xl md:text-7xl font-black text-danger-500 animate-pulse-slow">
-            {formatCurrency(Math.abs(result.annualNetSalaryDifference))} EUR
-          </div>
-
-          <div className="text-lg md:text-xl text-danger-300">
-            <span className="font-bold">{formatPercentage(result.percentageChange)}%</span> спрямо 2025 г.
-          </div>
-
-          <div className="pt-4 border-t border-danger-500/30 space-y-4">
-            <div>
+      {isUnaffected ? (
+        <div className="bg-gradient-to-br from-zinc-900 to-black border-2 border-green-600/50 rounded-2xl p-8 shadow-2xl shadow-green-900/20">
+          <div className="text-center space-y-4">
+            <div className="text-5xl">✅</div>
+            <h2 className="text-xl md:text-2xl text-green-300 font-semibold">
+              Вашата заплата не се променя през 2026 година
+            </h2>
+            <p className="text-zinc-400 text-sm md:text-base max-w-xl mx-auto">
+              Единствената промяна за 2026 е увеличението на максималния осигурителен доход
+              от 2,111.46 EUR на 2,300 EUR. Вашата брутна заплата от{' '}
+              <span className="text-white font-mono">{formatCurrency(result.year2025.grossSalary)} EUR</span>{' '}
+              е под стария таван, затова осигуровките, данъкът и нетната ви заплата остават същите.
+            </p>
+            <div className="pt-4 border-t border-zinc-800">
               <p className="text-zinc-400 text-sm md:text-base">
-                Месечна загуба за служителя
+                Нетна заплата през 2025 и 2026
               </p>
-              <p className="text-3xl md:text-4xl font-bold text-danger-400 mt-2">
-                {formatCurrency(Math.abs(result.netSalaryDifference))} EUR
-              </p>
-            </div>
-            <div>
-              <p className="text-zinc-400 text-sm md:text-base">
-                Годишна загуба за работодателя
-              </p>
-              <p className="text-3xl md:text-4xl font-bold text-orange-400 mt-2">
-                {formatCurrency(Math.abs(result.annualEmployerCostDifference))} EUR
+              <p className="text-3xl md:text-4xl font-bold text-green-400 mt-2">
+                {formatCurrency(result.year2026.netSalary)} EUR
               </p>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-gradient-to-br from-danger-950 to-black border-2 border-danger-500 rounded-2xl p-8 shadow-2xl shadow-danger-900/40">
+          <div className="text-center space-y-4">
+            <h2 className="text-xl md:text-2xl text-danger-300 font-semibold">
+              Вашата годишна загуба през 2026 година
+            </h2>
+
+            <div className="text-5xl md:text-7xl font-black text-danger-500 animate-pulse-slow">
+              {formatCurrency(Math.abs(result.annualNetSalaryDifference))} EUR
+            </div>
+
+            <div className="text-lg md:text-xl text-danger-300">
+              <span className="font-bold">{formatPercentage(result.percentageChange)}%</span> спрямо 2025 г.
+            </div>
+
+            <div className="pt-4 border-t border-danger-500/30 space-y-4">
+              <div>
+                <p className="text-zinc-400 text-sm md:text-base">
+                  Месечна загуба за служителя
+                </p>
+                <p className="text-3xl md:text-4xl font-bold text-danger-400 mt-2">
+                  {formatCurrency(Math.abs(result.netSalaryDifference))} EUR
+                </p>
+              </div>
+              <div>
+                <p className="text-zinc-400 text-sm md:text-base">
+                  Годишно увеличение на разходите за работодателя
+                </p>
+                <p className="text-3xl md:text-4xl font-bold text-orange-400 mt-2">
+                  {formatCurrency(Math.abs(result.annualEmployerCostDifference))} EUR
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Salary Comparison */}
       <div className="grid md:grid-cols-2 gap-4">
@@ -105,7 +134,9 @@ export function ResultsDisplay({ result, onReset }: ResultsDisplayProps) {
       </div>
 
       {/* Product Comparison */}
-      <ProductComparison annualDifference={result.annualNetSalaryDifference} />
+      {!isUnaffected && (
+        <ProductComparison annualDifference={result.annualNetSalaryDifference} />
+      )}
 
       {/* Detailed Breakdown Toggle */}
       <button
@@ -168,7 +199,7 @@ export function ResultsDisplay({ result, onReset }: ResultsDisplayProps) {
               <div className="space-y-2 text-sm">
                 <div className="font-semibold text-danger-400 mb-3">2026 година</div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-400">Пенсии (7.47%):</span>
+                  <span className="text-zinc-400">Пенсии (6.58%):</span>
                   <span className="text-white font-mono">{formatCurrency(result.year2026.employeeContributions.pension)} EUR</span>
                 </div>
                 <div className="flex justify-between">
@@ -248,7 +279,7 @@ export function ResultsDisplay({ result, onReset }: ResultsDisplayProps) {
               <div className="space-y-2 text-sm">
                 <div className="font-semibold text-danger-400 mb-3">2026 година</div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-400">Пенсии (9.33%):</span>
+                  <span className="text-zinc-400">Пенсии (8.22%):</span>
                   <span className="text-white font-mono">{formatCurrency(result.year2026.employerContributions.pension)} EUR</span>
                 </div>
                 <div className="flex justify-between">
@@ -285,17 +316,31 @@ export function ResultsDisplay({ result, onReset }: ResultsDisplayProps) {
             </div>
 
             {/* Employer Cost Increase */}
-            <div className="mt-4 bg-danger-950/30 border border-danger-500/30 rounded-lg p-4">
-              <div className="text-center">
-                <p className="text-sm text-zinc-400">Увеличение на разходите за работодател</p>
-                <p className="text-2xl font-bold text-danger-400 mt-1">
-                  +{formatCurrency(result.employerCostDifference)} EUR/месец
-                </p>
-                <p className="text-sm text-danger-500 mt-1">
-                  Годишно: +{formatCurrency(result.annualEmployerCostDifference)} EUR
-                </p>
+            {isUnaffected ? (
+              <div className="mt-4 bg-zinc-900/60 border border-zinc-700 rounded-lg p-4">
+                <div className="text-center">
+                  <p className="text-sm text-zinc-400">Увеличение на разходите за работодател</p>
+                  <p className="text-2xl font-bold text-green-400 mt-1">
+                    Без промяна
+                  </p>
+                  <p className="text-sm text-zinc-500 mt-1">
+                    Брутната заплата е под максималния осигурителен доход за 2025
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mt-4 bg-danger-950/30 border border-danger-500/30 rounded-lg p-4">
+                <div className="text-center">
+                  <p className="text-sm text-zinc-400">Увеличение на разходите за работодател</p>
+                  <p className="text-2xl font-bold text-danger-400 mt-1">
+                    +{formatCurrency(result.employerCostDifference)} EUR/месец
+                  </p>
+                  <p className="text-sm text-danger-500 mt-1">
+                    Годишно: +{formatCurrency(result.annualEmployerCostDifference)} EUR
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
