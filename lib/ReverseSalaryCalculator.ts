@@ -90,13 +90,16 @@ export interface ReverseSalaryResult {
 
 /**
  * Default tax parameters for 2026
+ *
+ * Versus 2025 only the maximum insurable income changes (up to 2,300 EUR);
+ * every contribution rate stays the same.
  */
 export const DEFAULT_TAX_PARAMETERS_2026: TaxParameters = {
   maxInsurableIncome: 2300,
   dzpoEmployeeRate: 0.022,
   dzpoEmployerRate: 0.028,
-  pensionEmployeeRate: 0.0747,
-  pensionEmployerRate: 0.0933,
+  pensionEmployeeRate: 0.0658,
+  pensionEmployerRate: 0.0822,
   healthEmployeeRate: 0.032,
   healthEmployerRate: 0.048,
   sicknessEmployeeRate: 0.014,

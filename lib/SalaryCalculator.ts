@@ -131,18 +131,23 @@ const TAX_CONFIG_2025: TaxConfig = {
   incomeTaxRate: 0.10,
 };
 
+/**
+ * 2026 budget: the only change versus 2025 is the maximum insurable income,
+ * which goes up to 2,300 EUR. All contribution rates and the income tax rate
+ * stay exactly as they were in 2025.
+ */
 const TAX_CONFIG_2026: TaxConfig = {
   year: 2026,
   maxInsurableIncome: 2300,
   employee: {
-    pension: 0.0658, // 6.58% + 0.89% increase = 7.47%
+    pension: 0.0658,
     sickness: 0.014,
     unemployment: 0.004,
     supplementaryPension: 0.022,
     health: 0.032,
   },
   employer: {
-    pension: 0.0822, // 8.22% + 1.11% increase = 9.33% for 2026
+    pension: 0.0822,
     sickness: 0.021,
     unemployment: 0.006,
     supplementaryPension: 0.028,
@@ -347,8 +352,8 @@ export class SalaryCalculator {
   /**
    * Calculates how many products can be bought with the annual difference
    *
-   * @param annualDifference - Annual salary difference in BGN
-   * @param productPrice - Price of a single product in BGN
+   * @param annualDifference - Annual salary difference in EUR
+   * @param productPrice - Price of a single product in EUR
    * @returns Number of products that could have been purchased
    */
   public calculateProductLoss(annualDifference: number, productPrice: number): number {

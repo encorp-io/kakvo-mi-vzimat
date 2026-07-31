@@ -5,7 +5,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8?logo=tailwind-css)
-![Tests](https://img.shields.io/badge/Tests-27%20passed-success)
+![Tests](https://img.shields.io/badge/Tests-32%20passed-success)
 
 ## 🎯 Основни функционалности
 
@@ -50,38 +50,47 @@ npm run test:watch
 
 ## 📊 Данъчни промени 2025 → 2026
 
-### Максимален осигурителен доход
-- **2025**: 4,130 лв. (брутна заплата)
-- **2026**: 4,600 лв. (брутна заплата)
-- **Промяна**: +470 лв. (+11.4%)
+> От 1 януари 2026 официалната валута в България е еврото. Всички суми в
+> калкулатора и в тази документация са в EUR.
 
-### Осигуровки за служителя
-#### Пенсии
-- **2025**: 6.58%
-- **2026**: 7.47%
-- **Промяна**: +0.89%
+Бюджет 2026 променя **само** максималния осигурителен доход. Всички осигурителни
+ставки и подоходният данък остават непроменени спрямо 2025 година.
 
-Останалите осигуровки остават същите:
+### Максимален осигурителен доход (МОД)
+- **2025**: 2,111.46 EUR (брутна заплата)
+- **2026**: 2,300 EUR (брутна заплата)
+- **Промяна**: +188.54 EUR (+8.9%)
+
+### Осигуровки за служителя (без промяна за 2026)
+- Пенсии: 6.58%
 - ОЗМ (Общо заболяване и майчинство): 1.4%
 - Безработица: 0.4%
 - ДЗПО (Допълнително задължително пенсионно осигуряване): 2.2%
 - Здравно осигуряване: 3.2%
+- **Общо**: 13.78%
 
-### Осигуровки за работодателя
-#### Пенсии
-- **2025**: 8.22%
-- **2026**: 9.33%
-- **Промяна**: +1.11%
-
-Останалите осигуровки остават същите:
+### Осигуровки за работодателя (без промяна за 2026)
+- Пенсии: 8.22%
 - ОЗМ: 2.1%
 - Безработица: 0.6%
 - ДЗПО: 2.8%
 - ТЗПБ (Трудова злополука и професионална болест): 0.4%
 - Здравно осигуряване: 4.8%
+- **Общо**: 18.92%
 
 ### Данък върху доходите на физическите лица
 - **2025 и 2026**: 10% (без промяна)
+
+### Кого засяга промяната
+
+Осигуровките се дължат само върху брутна заплата до МОД. Затова:
+
+- **Брутна заплата под 2,111.46 EUR** – нищо не се променя.
+- **Брутна заплата между 2,111.46 EUR и 2,300 EUR** – осигуровки се дължат върху
+  цялата брутна заплата, а не само до стария таван.
+- **Брутна заплата над 2,300 EUR** – максимален ефект: 25.98 EUR/месец повече
+  осигуровки за служителя (23.38 EUR по-малко нетно след данъка) и 35.67
+  EUR/месец повече разход за работодателя.
 
 ## 🏗️ Архитектура
 
@@ -128,11 +137,11 @@ kakvomivzimat/
 import { salaryCalculator } from '@/lib/SalaryCalculator';
 
 // Сравнение между 2025 и 2026
-const comparison = salaryCalculator.compareSalaryBetweenYears(4000);
+const comparison = salaryCalculator.compareSalaryBetweenYears(2000);
 
-console.log(comparison.netSalaryDifference); // -91.42 лв.
-console.log(comparison.annualNetSalaryDifference); // -1,097.04 лв.
-console.log(comparison.percentageChange); // -2.29%
+console.log(comparison.netSalaryDifference); // -23.38 EUR
+console.log(comparison.annualNetSalaryDifference); // -280.56 EUR
+console.log(comparison.percentageChange); // -1.17%
 ```
 
 ### Ключови методи
@@ -149,7 +158,7 @@ const result = calculator.calculateNetFromGross(5000, TAX_CONFIG_2025);
 Сравнява заплати между 2025 и 2026 година.
 
 ```typescript
-const comparison = calculator.compareSalaryBetweenYears(4000);
+const comparison = calculator.compareSalaryBetweenYears(2000);
 // Връща пълно сравнение с всички разлики
 ```
 
@@ -157,15 +166,15 @@ const comparison = calculator.compareSalaryBetweenYears(4000);
 Изчислява колко продукти могат да бъдат закупени с годишната разлика.
 
 ```typescript
-const breads = calculator.calculateProductLoss(-1097.04, 2.5);
-// Връща 438 (хляба)
+const breads = calculator.calculateProductLoss(-280.56, 1.20);
+// Връща 233 (хляба)
 ```
 
 ## 🧪 Тестване
 
 Проектът има пълно тестово покритие на бизнес логиката:
 
-- ✅ 27 unit теста
+- ✅ 32 unit теста
 - ✅ Тестване на конфигурации за 2025 и 2026
 - ✅ Тестване на изчисления под/над максимален осигурителен доход
 - ✅ Тестване на edge cases
@@ -184,7 +193,7 @@ npm test
 #       ✓ 2026 configuration should have correct values
 #     ...
 #   Test Suites: 1 passed, 1 total
-#   Tests:       27 passed, 27 total
+#   Tests:       32 passed, 32 total
 ```
 
 ## 🎨 Дизайн и UX

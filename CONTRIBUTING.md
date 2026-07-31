@@ -192,7 +192,7 @@ kakvomivzimat/
   /**
    * Calculates net salary from gross salary
    *
-   * @param grossSalary - The gross salary amount in BGN
+   * @param grossSalary - The gross salary amount in EUR
    * @param config - Tax configuration to use
    * @returns Full calculation result including all contributions
    *
